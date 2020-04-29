@@ -16,7 +16,7 @@ hue,sat,value=cv2.split(imagemHSV)
 # cv2.imshow("Original 2",sat)
 # cv2.imshow("Original 3",value)
 
-ret,imagemBinaria= cv2.threshold(value, 120,200,cv2.THRESH_BINARY)
+ret,imagemBinaria= cv2.threshold(imagemCinza, 120,200,cv2.THRESH_BINARY)
 imagemBinaria = cv2.morphologyEx(imagemBinaria, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2)),iterations=1)
 cv2.imshow("Original 2",imagemBinaria)
 imagemBinaria = cv2.erode(imagemBinaria, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)),iterations=1)
@@ -28,7 +28,7 @@ contornos, hierarquia = cv2.findContours (imagemBinaria, cv2.RETR_TREE, cv2.CHAI
 print(len(contornos))
 cv2.drawContours(imagem, contornos, -1, (0,255,0), 3)
 
-contornos = sorted(contornos, key=cv2.contourArea, reverse=True)[0:4]
+contornos = sorted(contornos, key=cv2.contourArea, reverse=True)[0:16]
 
 contornos_poly = [None] * len(contornos)
 boundRect = [None] * len(contornos)
@@ -44,6 +44,7 @@ for i, c in enumerate(contornos):
 # imagemBinaria=cv2.dilate(imagemBinaria,None, iterations=2)
 # cv2.imshow("Original",imagemCinza)
 cv2.imshow("Original",imagem)
+cv2.imshow("Original 3",imagemBinaria)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
