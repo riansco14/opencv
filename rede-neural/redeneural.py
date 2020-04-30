@@ -1,4 +1,6 @@
 import random
+from math import exp
+
 import numpy as np
 
 
@@ -8,18 +10,19 @@ class Neuronio:
         self.pesos = []
         for i in range(numEntradas):
             self.pesos.append(random.random())
-        self.pesos.insert(0, bias)
+        # self.pesos.insert(0, bias)
         self.rateAprendizado = 0.2
         self.indexCamada = indexCamada
         self.indexNeuronio = indexNeuronio
         self.saida=-9999
+        self.erro=None
 
-
-    def activation(self, x):
-        return (np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x))
+    #sigmoid
+    def activation(self, sum):
+        return 1.0 / (1.0 + exp(-sum))
 
     def activationDerivate(self, sum):
-        return 1-self.activation(sum)**2
+        return sum * (1.0 - sum)
 
     def calcSaida(self, entrada):
         sum = 0
@@ -37,7 +40,7 @@ class Neuronio:
               "|| Saída: ", " ", self.saida)
 
     def printNeuron(self):
-        print("Camada: ", self.indexCamada, "Neuronio: ", self.indexNeuronio,"|| Pesos: ", self.pesos)
+        print("Camada: ", self.indexCamada, "Neuronio: ", self.indexNeuronio,"|| Pesos: ", self.pesos, "|| Erro: ",self.erro)
 
 def neuroniosSaida(camada):
     entradas=[]
@@ -54,6 +57,7 @@ def criarRedeNeural(numCamadas, numNeuronios, numElementosEntrada):
         # Adicionar Neuronios
         for j in range(numNeuronios):
             if i == 0:
+                print("criando", numElementosEntrada)
                 neuronios.append(Neuronio(numElementosEntrada, i, j))
                 break
             elif i == numCamadas - 1:
@@ -80,22 +84,48 @@ numElementosEntrada = len(entradas[0])
 redeneural = criarRedeNeural(numCamadas, numNeuronios, numElementosEntrada)
 
 for indexEntrada in range(1):
+    #feedfoward
     for indexCamada in range(len(redeneural)):
         for neuronio in redeneural[indexCamada]:
             if indexCamada==0:
-                neuronio.printNeuron()
+                # neuronio.printNeuron()
                 neuronio.ativarNeuronio(entradas[indexEntrada])
             else:
-                neuronio.printNeuron()
+                # neuronio.printNeuron()
                 neuronio.ativarNeuronio(neuroniosSaida(redeneural[indexCamada-1]))
 
+    #backpropagation
     for indexCamada in reversed(range(len(redeneural))):
-        for neuronio in redeneural[indexCamada]:
-            if indexCamada == len(redeneural)-1:
-                print(indexCamada)
-                for indexPeso in range(len(neuronio.pesos)):
-                    somaAnterior=0
-                    neuronio.pesos[indexPeso]+=-(neuronio.saida-saidas[indexEntrada])*(1)*entradas[indexEntrada][indexPeso]
-            else:
-                neuronio.pesos[indexPeso] +=(1)
-        pass
+        camada=redeneural[indexCamada]
+
+        #se for ultima camada
+        if indexCamada == len(redeneural)-1:
+            for indexNeuronio in range(len(camada)):
+                neuronio = camada[indexNeuronio]
+                yE=saidas[indexEntrada]
+                y=neuronio.saida
+                neuronio.erro=(yE-y) * neuronio.activationDerivate(y)
+        #camada intermediaria
+        else:
+            for indexNeuronio in range(len(camada)):
+                # print("rodou a anterior", indexCamada)
+                neuronio = camada[indexNeuronio]
+                erro=0.0
+                for neuronioProximo in redeneural[indexCamada+1]:
+                    erro+=(neuronioProximo.pesos[indexNeuronio]*neuronioProximo.erro)
+                y = neuronio.saida
+                neuronio.erro=erro*neuronio.activationDerivate(y)
+
+        for neuronio in camada:
+            neuronio.printNeuron()
+
+    #atualizar pesos e corrigir error
+    for indexCamada in range(len(redeneural)):
+        camada=redeneural[indexCamada]
+        entrada = entradas[indexEntrada]
+        if indexCamada != 0:
+            entrada=neuroniosSaida(redeneural[indexCamada-1])
+        for neuronio in camada:
+            for indexPeso in range(len(neuronio.pesos)):
+                neuronio.pesos[indexPeso]+=neuronio.rateAprendizado*neuronio.erro*entrada[indexPeso]
+            neuronio.printNeuronSaida(entrada)
