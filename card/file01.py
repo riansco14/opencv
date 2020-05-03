@@ -24,22 +24,31 @@ imagemBinaria = cv2.dilate(imagemBinaria, cv2.getStructuringElement(cv2.MORPH_CR
 
 # imagemBinaria = cv2.morphologyEx(imagemBinaria, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)),iterations=4)
 
-contornos, hierarquia = cv2.findContours (imagemBinaria, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-print(len(contornos))
+contornos, hierarquia = cv2.findContours (imagemBinaria, cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+# print(len(contornos))
 cv2.drawContours(imagem, contornos, -1, (0,255,0), 3)
 
-contornos = sorted(contornos, key=cv2.contourArea, reverse=True)[0:16]
+# contornos = sorted(contornos, key=cv2.contourArea, reverse=True)
 
 contornos_poly = [None] * len(contornos)
 boundRect = [None] * len(contornos)
 centers = [None] * len(contornos)
 radius = [None] * len(contornos)
+cropedImages=list()
 for i, c in enumerate(contornos):
-    contornos_poly[i] = cv2.approxPolyDP(c, 3, True)
-    boundRect[i] = cv2.boundingRect(cv2.approxPolyDP(c, 3, True))
-    print(int(boundRect[i][0]), int(boundRect[i][1]),int( boundRect[i][2]), int( boundRect[i][3]))
-    cv2.rectangle(imagem, (int(boundRect[i][0]), int(boundRect[i][1])), \
-                 (int(boundRect[i][0] + boundRect[i][2]), int(boundRect[i][1] + boundRect[i][3])), (255,0,0), 2)
+    area = cv2.contourArea(c)
+    perimetro=cv2.arcLength(c,True)
+    approx=cv2.approxPolyDP(c, perimetro*0.1,True)
+    # if area >100000.0:
+    if len(approx)==4 and area >100000.0:
+        x,y,w,h = cv2.boundingRect(approx)
+        # print(int(boundRect[i][0]), int(boundRect[i][1]),int( boundRect[i][2]), int( boundRect[i][3]))
+        cv2.rectangle(imagem, (int(x), int(y)), \
+                      (int(x+w), int(y+h)), (255,0,0), 2)
+        cropedImages.append(imagem[y:y+h,x:x+w])
+
+for indexCrop in range(len(cropedImages)):
+    cv2.imshow(str(indexCrop),cropedImages[indexCrop])
 # imagemBinaria=cv2.erode(imagemBinaria,None, iterations=1)
 # imagemBinaria=cv2.dilate(imagemBinaria,None, iterations=2)
 # cv2.imshow("Original",imagemCinza)
